@@ -1,33 +1,57 @@
+const {
+  ADMIN_ROLE,
+  FIELD_ONLY_UPDATEABLE_BY_ADMIN_EVENTS,
+} = require("../common/Constants");
+const { createSeedEventLike } = require("../common/generalHelpers");
 const asyncHandler = require("../middlewares/asyncHandler");
 const Event = require("../models/Event");
 
 const createEvent = asyncHandler(async (req, res) => {
-  let { comments } = req.body;
-
-  comments = comments ?? [];
-
-  if (
-    comments.length &&
-    comments.some(({ comment, email }) => !email || !comment)
-  ) {
-    res.json({
-      message: "Email Or Comment Message Is Missing In Atleast One Comment",
-      status: "Error",
-    });
-  }
-
-  const uniqueComments =
-    comments &&
-    comments.map(({ comment, email }) => {
-      return { comment, email, uuid: crypto.randomUUID() };
-    });
-
   const event = await Event.create({
     ...req.body,
-    comments: [...uniqueComments],
+    comments: [],
   });
+
+  if (event) {
+    createSeedEventLike(event);
+  }
 
   res.json({ message: event, status: "success" });
 });
 
-module.exports = { createEvent };
+const updateEvent = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const currentEvent = await Event.findById({ _id: id });
+
+  let { comment } = req.body;
+
+  comment = comment ?? {};
+
+  if (
+    Object.keys(req.body).some((elem) =>
+      FIELD_ONLY_UPDATEABLE_BY_ADMIN_EVENTS.includes(elem)
+    ) &&
+    req.user.role !== ADMIN_ROLE
+  ) {
+    res.json({
+      message: "Only Admin Can Perform This Action",
+      status: "Error",
+    });
+  }
+
+  const updatedEvent = await Event.findByIdAndUpdate(
+    { _id: id },
+    {
+      ...req.body,
+      comments: [
+        ...currentEvent?.comments,
+        { ...comment, uuid: crypto.randomUUID() },
+      ],
+    },
+    { new: true, runValidators: true }
+  );
+
+  res.json({ message: updatedEvent, status: "success" });
+});
+
+module.exports = { createEvent, updateEvent };

@@ -15,12 +15,13 @@ createSeedAdmin();
 //Routes Imports
 const userRoute = require("./routes/user");
 const eventRoute = require("./routes/event");
-
+const eventLikesRoute = require("./routes/eventLike");
 const errorHandler = require("./middlewares/error");
 
 //Routes Middlewares
 app.use("/api/v1/users", userRoute);
 app.use("/api/v1/events", eventRoute);
+app.use("/api/v1/like-event", eventLikesRoute);
 
 app.use(errorHandler);
 

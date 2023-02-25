@@ -1,3 +1,4 @@
+const EventLikeModel = require("../models/EventLikeModel");
 const userModel = require("../models/userModel");
 
 const generateOtp = () => {
@@ -21,4 +22,14 @@ const createSeedAdmin = async () => {
   }
 };
 
-module.exports = { generateOtp, createSeedAdmin };
+const createSeedEventLike = async (event) => {
+  const currentEventId = await event?._id;
+  const eventLike = await EventLikeModel.create({
+    eventId: currentEventId,
+    count: 0,
+  });
+
+  console.log(eventLike);
+};
+
+module.exports = { generateOtp, createSeedAdmin, createSeedEventLike };
